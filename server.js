@@ -22,15 +22,44 @@ const pool = mysql.createPool({
   ssl: { rejectUnauthorized: false } 
 });
 
-// Test Connection on Startup
-pool.getConnection()
-  .then(conn => {
+/**
+ * DATABASE INITIALIZATION
+ * This part automatically creates your tables if they don't exist yet!
+ */
+const initDB = async () => {
+  try {
+    const conn = await pool.getConnection();
     console.log('✅ Connected to Railway Cloud Database!');
+
+    // Create Users Table
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        full_name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE,
+        created_at DATETIME
+      )
+    `);
+
+    // Create Mood Entries Table
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS mood_entries (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        full_name VARCHAR(255),
+        mood VARCHAR(255) NOT NULL,
+        note TEXT,
+        created_at DATETIME
+      )
+    `);
+
+    console.log('✅ Database tables verified and ready!');
     conn.release();
-  })
-  .catch(err => {
-    console.error('❌ Database connection error:', err.message);
-  });
+  } catch (err) {
+    console.error('❌ Database Initialization Error:', err.message);
+  }
+};
+
+initDB();
 
 // POST endpoint: Receives data from Vue and saves to MySQL
 app.post('/api/moods', async (req, res) => {
@@ -74,6 +103,7 @@ app.get('/', (req, res) => {
   res.send('🚀 Wellness AI API is live and healthy.');
 });
 
+// Render uses process.env.PORT, but we'll fallback to 3000
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
