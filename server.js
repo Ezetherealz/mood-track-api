@@ -7,19 +7,23 @@ dotenv.config();
 
 const app = express();
 
-// 1. Enable CORS for Vue (Port 5173)
-app.use(cors()); 
+// Enable CORS so your Vue app on GitHub Pages can access this API
+app.use(cors({
+  origin: "*", // Allows access from any domain (Standard for Labs)
+  methods: ["GET", "POST"]
+}));
+
 app.use(express.json()); 
 
-// 2. Define Routes
+// Routes
 app.use("/api/moods", moodRoutes);
 
-// 3. Health Check
+// Root Health Check
 app.get("/", (req, res) => {
-  res.send("🚀 API is running perfectly!");
+  res.send("🚀 Wellness AI API is live and running on Render!");
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
