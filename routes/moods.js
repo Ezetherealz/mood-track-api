@@ -1,41 +1,27 @@
 import express from "express";
-import { db } from "../db.js";
-import { getAIResponse } from "../services/aiService.js";
+import axios from "axios"; // Ensure axios is installed in your backend too!
 
 const router = express.Router();
 
+// This handles POST requests to http://localhost:3000/api/moods
 router.post("/", async (req, res) => {
-  const { user_id, mood_text } = req.body;
+  const { full_name, mood_text } = req.body;
+
   try {
-    const [result] = await db.query(
-      "INSERT INTO mood_entries (user_id, mood_text) VALUES (?, ?)",
-      [user_id, mood_text]
-    );
+    // 1. (Optional) Here you would save to MySQL as you did in Lab 4
+    console.log(`Received mood from ${full_name}: ${mood_text}`);
 
-    const aiMessage = await getAIResponse(mood_text);
+    // 2. Call Gemini/AI (Placeholder for Lab 5 logic)
+    // For the lab, you can return a simulated AI response if your key is down
+    const aiResponse = `Hi ${full_name}, I hear that you're feeling '${mood_text}'. Remember to take a deep breath and stay hydrated!`;
 
-    await db.query(
-      "INSERT INTO ai_responses (mood_entry_id, ai_message) VALUES (?, ?)",
-      [result.insertId, aiMessage]
-    );
-
-    res.json({ message: "Mood saved", aiMessage });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.get("/", async (req, res) => {
-  try {
-    const [rows] = await db.query(`
-      SELECT u.full_name, m.mood_text, a.ai_message 
-      FROM users u 
-      JOIN mood_entries m ON u.id = m.user_id 
-      JOIN ai_responses a ON m.id = a.mood_entry_id
-    `);
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.json({
+      success: true,
+      ai_message: aiResponse
+    });
+  } catch (error) {
+    console.error("Error in mood route:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
